@@ -1,0 +1,40 @@
+From 919afbd68863550665b328a78107bc2919c5e3f4 Mon Sep 17 00:00:00 2001
+From: Joe Jin <joe.jin@oracle.com>
+Date: Mon, 5 Feb 2007 18:08:47 -0800
+Subject: [PATCH] [NET] slip: Replace kmalloc() + memset() pairs with the
+ appropriate kzalloc() calls
+
+This patch replace kmalloc() + memset() pairs with the appropriate
+kzalloc().
+
+Signed-off-by: Joe Jin <joe.jin@oracle.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+ drivers/net/slip.c | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/drivers/net/slip.c b/drivers/net/slip.c
+index a0806d262fc6..2f4b1de7a2b4 100644
+--- a/drivers/net/slip.c
++++ b/drivers/net/slip.c
+@@ -1343,15 +1343,12 @@ static int __init slip_init(void)
+ 	printk(KERN_INFO "SLIP linefill/keepalive option.\n");
+ #endif
+ 
+-	slip_devs = kmalloc(sizeof(struct net_device *)*slip_maxdev, GFP_KERNEL);
++	slip_devs = kzalloc(sizeof(struct net_device *)*slip_maxdev, GFP_KERNEL);
+ 	if (!slip_devs) {
+ 		printk(KERN_ERR "SLIP: Can't allocate slip devices array!  Uaargh! (-> No SLIP available)\n");
+ 		return -ENOMEM;
+ 	}
+ 
+-	/* Clear the pointer array, we allocate devices when we need them */
+-	memset(slip_devs, 0, sizeof(struct net_device *)*slip_maxdev);
+-
+ 	/* Fill in our line protocol discipline, and register it */
+ 	if ((status = tty_register_ldisc(N_SLIP, &sl_ldisc)) != 0)  {
+ 		printk(KERN_ERR "SLIP: can't register line discipline (err = %d)\n", status);
+-- 
+2.17.1 (Apple Git-112)
+

@@ -1,0 +1,62 @@
+From 076e2cedd6ea4786569c35f8725b4efdc1ecf2f2 Mon Sep 17 00:00:00 2001
+From: Joe Jin <joe.jin@oracle.com>
+Date: Tue, 28 Aug 2018 07:56:08 -0700
+Subject: [PATCH] xen: export device state to sysfs
+
+Export device state to sysfs to allow for easier get device state.
+
+Signed-off-by: Joe Jin <joe.jin@oracle.com>
+Reviewed-by: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+Cc: Juergen Gross <jgross@suse.com>
+Cc: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
+Signed-off-by: Boris Ostrovsky <boris.ostrovsky@oracle.com>
+---
+ Documentation/ABI/stable/sysfs-bus-xen-backend | 9 +++++++++
+ drivers/xen/xenbus/xenbus_probe.c              | 9 +++++++++
+ 2 files changed, 18 insertions(+)
+
+diff --git a/Documentation/ABI/stable/sysfs-bus-xen-backend b/Documentation/ABI/stable/sysfs-bus-xen-backend
+index 3d5951c8bf5f..e8b60bd766f7 100644
+--- a/Documentation/ABI/stable/sysfs-bus-xen-backend
++++ b/Documentation/ABI/stable/sysfs-bus-xen-backend
+@@ -73,3 +73,12 @@ KernelVersion:	3.0
+ Contact:	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
+ Description:
+                 Number of sectors written by the frontend.
++
++What:		/sys/bus/xen-backend/devices/*/state
++Date:		August 2018
++KernelVersion:	4.19
++Contact:	Joe Jin <joe.jin@oracle.com>
++Description:
++                The state of the device. One of: 'Unknown',
++                'Initialising', 'Initialised', 'Connected', 'Closing',
++                'Closed', 'Reconfiguring', 'Reconfigured'.
+diff --git a/drivers/xen/xenbus/xenbus_probe.c b/drivers/xen/xenbus/xenbus_probe.c
+index f2088838f690..5b471889d723 100644
+--- a/drivers/xen/xenbus/xenbus_probe.c
++++ b/drivers/xen/xenbus/xenbus_probe.c
+@@ -402,10 +402,19 @@ static ssize_t modalias_show(struct device *dev,
+ }
+ static DEVICE_ATTR_RO(modalias);
+ 
++static ssize_t state_show(struct device *dev,
++			    struct device_attribute *attr, char *buf)
++{
++	return sprintf(buf, "%s\n",
++			xenbus_strstate(to_xenbus_device(dev)->state));
++}
++static DEVICE_ATTR_RO(state);
++
+ static struct attribute *xenbus_dev_attrs[] = {
+ 	&dev_attr_nodename.attr,
+ 	&dev_attr_devtype.attr,
+ 	&dev_attr_modalias.attr,
++	&dev_attr_state.attr,
+ 	NULL,
+ };
+ 
+-- 
+2.17.1 (Apple Git-112)
+

@@ -1,0 +1,57 @@
+From 1bc05b0ae6448b20d46076899e0cc12ad999e50e Mon Sep 17 00:00:00 2001
+From: Joe Jin <joe.jin@oracle.com>
+Date: Mon, 15 Aug 2011 12:57:07 +0800
+Subject: [PATCH 2/2] xen-blkback: fixed indentation and comments
+
+This patch fixes belows:
+
+1. Fix code style issue.
+2. Fix incorrect functions name in comments.
+
+Signed-off-by: Joe Jin <joe.jin@oracle.com>
+Cc: Jens Axboe <jaxboe@fusionio.com>
+Cc: Ian Campbell <Ian.Campbell@eu.citrix.com>
+Signed-off-by: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
+---
+ drivers/block/xen-blkback/common.h | 2 +-
+ drivers/block/xen-blkback/xenbus.c | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/block/xen-blkback/common.h b/drivers/block/xen-blkback/common.h
+index 9e40b283a468..00c57c90e2d6 100644
+--- a/drivers/block/xen-blkback/common.h
++++ b/drivers/block/xen-blkback/common.h
+@@ -46,7 +46,7 @@
+ 
+ #define DRV_PFX "xen-blkback:"
+ #define DPRINTK(fmt, args...)				\
+-	pr_debug(DRV_PFX "(%s:%d) " fmt ".\n",	\
++	pr_debug(DRV_PFX "(%s:%d) " fmt ".\n",		\
+ 		 __func__, __LINE__, ##args)
+ 
+ 
+diff --git a/drivers/block/xen-blkback/xenbus.c b/drivers/block/xen-blkback/xenbus.c
+index 7be3d0fe8ad3..a96cb5f893a8 100644
+--- a/drivers/block/xen-blkback/xenbus.c
++++ b/drivers/block/xen-blkback/xenbus.c
+@@ -590,7 +590,7 @@ static void frontend_changed(struct xenbus_device *dev,
+ 
+ 		/*
+ 		 * Enforce precondition before potential leak point.
+-		 * blkif_disconnect() is idempotent.
++		 * xen_blkif_disconnect() is idempotent.
+ 		 */
+ 		xen_blkif_disconnect(be->blkif);
+ 
+@@ -611,7 +611,7 @@ static void frontend_changed(struct xenbus_device *dev,
+ 			break;
+ 		/* fall through if not online */
+ 	case XenbusStateUnknown:
+-		/* implies blkif_disconnect() via blkback_remove() */
++		/* implies xen_blkif_disconnect() via xen_blkbk_remove() */
+ 		device_unregister(&dev->dev);
+ 		break;
+ 
+-- 
+2.17.1 (Apple Git-112)
+

@@ -1,0 +1,73 @@
+From ca17c23345308a8692a65a0cca363d9108a665ca Mon Sep 17 00:00:00 2001
+From: Joe Jin <joe.jin@oracle.com>
+Date: Tue, 20 Feb 2007 01:30:15 -0800
+Subject: [PATCH] [IPV6]: Adjust inet6_exit() cleanup sequence against
+ inet6_init()
+
+This patch for adjust inet6_exit() to inverse sequence to inet6_init().
+
+At ipv6_init, it first create proc_root/net/dev_snmp6 entry by call
+ipv6_misc_proc_init(), then call addrconf_init() to create the corresponding
+device entry at this directory, but at inet6_exit, ipv6_misc_proc_exit()
+called first, then call addrconf_init().
+
+Signed-off-by: Joe Jin <joe.jin@oracle.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+ net/ipv6/af_inet6.c | 24 ++++++++++++++----------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
+
+diff --git a/net/ipv6/af_inet6.c b/net/ipv6/af_inet6.c
+index 3585d8fa7f02..5cac14a5c778 100644
+--- a/net/ipv6/af_inet6.c
++++ b/net/ipv6/af_inet6.c
+@@ -929,25 +929,28 @@ static void __exit inet6_exit(void)
+ {
+ 	/* First of all disallow new sockets creation. */
+ 	sock_unregister(PF_INET6);
++
++	/* Cleanup code parts. */
++	ipv6_packet_cleanup();
++#ifdef CONFIG_IPV6_MIP6
++	mip6_fini();
++#endif
++	addrconf_cleanup();
++	ip6_flowlabel_cleanup();
++	ip6_route_cleanup();
+ #ifdef CONFIG_PROC_FS
++
++	/* Cleanup code parts. */
+ 	if6_proc_exit();
+ 	ac6_proc_exit();
+ 	ipv6_misc_proc_exit();
+-	udp6_proc_exit();
+ 	udplite6_proc_exit();
++	udp6_proc_exit();
+ 	tcp6_proc_exit();
+ 	raw6_proc_exit();
+ #endif
+-#ifdef CONFIG_IPV6_MIP6
+-	mip6_fini();
+-#endif
+-	/* Cleanup code parts. */
+-	ip6_flowlabel_cleanup();
+-	addrconf_cleanup();
+-	ip6_route_cleanup();
+-	ipv6_packet_cleanup();
+-	igmp6_cleanup();
+ 	ipv6_netfilter_fini();
++	igmp6_cleanup();
+ 	ndisc_cleanup();
+ 	icmpv6_cleanup();
+ #ifdef CONFIG_SYSCTL
+@@ -955,6 +958,7 @@ static void __exit inet6_exit(void)
+ #endif
+ 	cleanup_ipv6_mibs();
+ 	proto_unregister(&rawv6_prot);
++	proto_unregister(&udplitev6_prot);
+ 	proto_unregister(&udpv6_prot);
+ 	proto_unregister(&tcpv6_prot);
+ }
+-- 
+2.17.1 (Apple Git-112)
+

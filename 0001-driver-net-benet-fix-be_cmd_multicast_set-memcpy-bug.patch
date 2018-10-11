@@ -1,0 +1,35 @@
+From 408cc293c29ada769ae772420a39961320da1854 Mon Sep 17 00:00:00 2001
+From: Joe Jin <joe.jin@oracle.com>
+Date: Mon, 6 Dec 2010 03:00:59 +0000
+Subject: [PATCH] driver/net/benet: fix be_cmd_multicast_set() memcpy bug
+
+Regarding  benet be_cmd_multicast_set() function, now using
+netdev_for_each_mc_addr() helper for mac address copy, but
+when copying to req->mac[] did not increase of the index.
+
+Cc: Sathya Perla <sathyap@serverengines.com>
+Cc: Subbu Seetharaman <subbus@serverengines.com>
+Cc: Sarveshwar Bandi <sarveshwarb@serverengines.com>
+Cc: Ajit Khaparde <ajitk@serverengines.com>
+Signed-off-by: Joe Jin <joe.jin@oracle.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+ drivers/net/benet/be_cmds.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/benet/be_cmds.c b/drivers/net/benet/be_cmds.c
+index 36eca1ce75d4..e4465d222a7d 100644
+--- a/drivers/net/benet/be_cmds.c
++++ b/drivers/net/benet/be_cmds.c
+@@ -1235,7 +1235,7 @@ int be_cmd_multicast_set(struct be_adapter *adapter, u32 if_id,
+ 
+ 		i = 0;
+ 		netdev_for_each_mc_addr(ha, netdev)
+-			memcpy(req->mac[i].byte, ha->addr, ETH_ALEN);
++			memcpy(req->mac[i++].byte, ha->addr, ETH_ALEN);
+ 	} else {
+ 		req->promiscuous = 1;
+ 	}
+-- 
+2.17.1 (Apple Git-112)
+

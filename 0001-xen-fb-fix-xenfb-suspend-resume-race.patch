@@ -1,0 +1,74 @@
+From 731f3ab66a23dab28a359e87364f53d221b3d366 Mon Sep 17 00:00:00 2001
+From: Joe Jin <joe.jin@oracle.com>
+Date: Fri, 7 Jan 2011 18:17:17 +0800
+Subject: [PATCH] xen/fb: fix xenfb suspend/resume race.
+
+When migrating guests over a long period we hit this:
+
+<1>BUG: unable to handle kernel paging request at 0000000b819fdb98
+<1>IP: [<ffffffff812a588f>] notify_remote_via_irq+0x13/0x34
+<4>PGD 94b10067 PUD 0
+<0>Oops: 0000 [#1] SMP
+.. snip..
+Call Trace:
+ [<ffffffff812712c9>] xenfb_send_event+0x5c/0x5e
+ [<ffffffff8100ea5f>] ? xen_restore_fl_direct_end+0x0/0x1
+ [<ffffffff81438d80>] ? _spin_unlock_irqrestore+0x16/0x18
+ [<ffffffff812714ee>] xenfb_refresh+0x1b1/0x1d7
+ [<ffffffff81270568>] ? sys_imageblit+0x1ac/0x458
+ [<ffffffff81271786>] xenfb_imageblit+0x2f/0x34
+ [<ffffffff8126a3e5>] soft_cursor+0x1b5/0x1c8
+ [<ffffffff8126a137>] bit_cursor+0x4b6/0x4d7
+ [<ffffffff8100ea5f>] ? xen_restore_fl_direct_end+0x0/0x1
+ [<ffffffff81438d80>] ? _spin_unlock_irqrestore+0x16/0x18
+ [<ffffffff81269c81>] ? bit_cursor+0x0/0x4d7
+ [<ffffffff812656b7>] fb_flashcursor+0xff/0x111
+ [<ffffffff812655b8>] ? fb_flashcursor+0x0/0x111
+ [<ffffffff81071812>] worker_thread+0x14d/0x1ed
+ [<ffffffff81075a8c>] ? autoremove_wake_function+0x0/0x3d
+ [<ffffffff81438d80>] ? _spin_unlock_irqrestore+0x16/0x18
+ [<ffffffff810716c5>] ? worker_thread+0x0/0x1ed
+ [<ffffffff810756e3>] kthread+0x6e/0x76
+ [<ffffffff81012dea>] child_rip+0xa/0x20
+ [<ffffffff81011fd1>] ? int_ret_from_sys_call+0x7/0x1b
+ [<ffffffff8101275d>] ? retint_restore_args+0x5/0x6
+ [<ffffffff81012de0>] ? child_rip+0x0/0x20
+Code: 6b ff 0c 8b 87 a4 db 9f 81 66 85 c0 74 08 0f b7 f8 e8 3b ff ff ff c9
+c3 55 48 89 e5 48 83 ec 10 0f 1f 44 00 00 89 ff 48 6b ff 0c <8b> 87 a4 db 9f
+81 66 85 c0 74 14 48 8d 75 f0 0f b7 c0 bf 04 00
+RIP  [<ffffffff812a588f>] notify_remote_via_irq+0x13/0x34
+ RSP <ffff8800e7bf7bd0>
+CR2: 0000000b819fdb98
+---[ end trace 098b4b74827595d0 ]---
+
+The root cause of the panic is the race between the resume and reconnect to the backend.
+
+Clearing the 'update_wanted' flag of xenfb before disconnecting from the
+backend fixes this issue.
+
+Signed-off-by: Joe Jin <joe.jin@oracle.com>
+Signed-off-by: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
+Tested-by: Gurudas Pai <gurudas.pai@oracle.com>
+Acked-by: Ian Campbell <ian.campbell@citrix.com>
+Cc: Jeremy Fitzhardinge <jeremy@goop.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+---
+ drivers/video/xen-fbfront.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/video/xen-fbfront.c b/drivers/video/xen-fbfront.c
+index 428d273be727..f92313d33e27 100644
+--- a/drivers/video/xen-fbfront.c
++++ b/drivers/video/xen-fbfront.c
+@@ -617,6 +617,8 @@ static int xenfb_connect_backend(struct xenbus_device *dev,
+ 
+ static void xenfb_disconnect_backend(struct xenfb_info *info)
+ {
++	/* Prevent xenfb refresh */
++	info->update_wanted = 0;
+ 	if (info->irq >= 0)
+ 		unbind_from_irqhandler(info->irq, info);
+ 	info->irq = -1;
+-- 
+2.17.1 (Apple Git-112)
+
