@@ -1,6 +1,12 @@
 # KernelPatch  
 Kernel patch for Linux kernel upstream:  
   
+## 0001-xen-swiotlb-use-actually-allocated-size-on-check-phy.patch
+From 7250f422da0480d8512b756640f131b9b893ccda Mon Sep 17 00:00:00 2001  
+From: Joe Jin <joe.jin@******.com>  
+Date: Tue, 16 Oct 2018 15:21:16 -0700  
+Subject: [PATCH] xen-swiotlb: use actually allocated size on check physical continuous  
+
 ## 0001-xen-export-device-state-to-sysfs.patch  
 From 076e2cedd6ea4786569c35f8725b4efdc1ecf2f2 Mon Sep 17 00:00:00 2001  
 From: Joe Jin <joe.jin@******.com>  
